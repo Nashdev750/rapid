@@ -8,11 +8,11 @@ services:
       - "8080:8080"
     environment:
       - REDIS_ADDR=redis:6379
-      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_URI=mongodb://mongodb-server:27017
       - PORT=8080
     depends_on:
       - redis
-      - mongodb
+      - mongodb-server
     restart: unless-stopped
 
   redis:
@@ -24,7 +24,7 @@ services:
 
   mongodb:
     image: mongo:8.0
-    container_name: mongodb
+    container_name: mongodb-server
     ports:
       - "27017:27017"
     restart: unless-stopped

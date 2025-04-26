@@ -78,3 +78,6 @@ console.log(predictions)
   await browser.close();
   redis.disconnect();
 })();
+
+
+// pm2 start scraper.js --name predictions-scraper --cron "0 0 * * *"
