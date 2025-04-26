@@ -1,0 +1,5 @@
+# Ignore local stuff when building Docker image
+*.log
+*.tmp
+.dockerignore
+node_modules
