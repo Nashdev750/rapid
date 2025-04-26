@@ -22,7 +22,7 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
-  mongodb:
+  mongodbserver:
     image: mongo:8.0
     container_name: mongodbserver
     ports:
