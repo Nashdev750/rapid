@@ -51,7 +51,7 @@ func main() {
 
 	// Initialize MongoDB (used only for background jobs)
 	var err error
-	mongoURI := getEnv("MONGO_URI", "mongodb://mongodb-server:27017")
+	mongoURI := getEnv("MONGO_URI", "mongodb://mongodb_server:27017")
 	mongoClient, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		log.Fatalf("Could not connect to MongoDB: %v", err)
