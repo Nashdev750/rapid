@@ -12,7 +12,7 @@ services:
 
   api:
     build:
-      context: ./api
+      context: .
       dockerfile: Dockerfile
     container_name: soccar-api
     restart: always
