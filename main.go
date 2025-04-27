@@ -39,7 +39,7 @@ type Prediction struct {
 func main() {
 	// Initialize Redis
 	rdb = redis.NewClient(&redis.Options{
-		Addr:     getEnv("REDIS_ADDR", "localhost:6379"),
+		Addr:     getEnv("REDIS_URL", "redis:6379"),
 		Password: getEnv("REDIS_PASSWORD", ""),
 		DB:       0,
 	})
