@@ -1,28 +1,44 @@
 services:
-  api:
-    build: .
-    container_name: football-api
-    ports:
-      - "8080:8080"
-    environment:
-      - REDIS_ADDR=redis:6379
-      - MONGO_URI=mongodb://mongodbserver:27017
-      - PORT=8080
-    depends_on:
-      - redis
-      - mongodbserver
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-
-  mongodbserver:
+  mongodb:
     image: mongo:8.0
     container_name: mongodbserver
+    restart: always
     ports:
-      - "27017:27017"
-    restart: unless-stopped
+      - "27018:27017"  # Expose MongoDB internally at 27017, externally at 27018
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - backend
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: soccar-api
+    restart: always
+    ports:
+      - "8080:8080"  # Expose your Go API
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017   # Connect to Mongo service via docker network
+      - REDIS_URL=redis:6379
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - backend
+
+  redis:
+    image: redis:alpine
+    container_name: redisserver
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+volumes:
+  mongo_data:
+
+networks:
+  backend:
+    driver: bridge
