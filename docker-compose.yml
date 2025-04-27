@@ -1,7 +1,7 @@
 services:
   mongodb:
     image: mongo:8.0
-    container_name: mongodbserver
+    container_name: mongoserver
     restart: always
     ports:
       - "27018:27017"  # Expose MongoDB internally at 27017, externally at 27018
