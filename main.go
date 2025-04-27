@@ -11,7 +11,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/options",
+	"github.com/go-chi/cors"
 )
 
 var (
@@ -61,6 +62,16 @@ func main() {
 	// Setup HTTP router
 	r := chi.NewRouter()
 
+	// Add CORS middleware
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Allow all origins
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-RapidAPI-Key"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
 	r.Get("/api/v1/predictions", getTodaysPredictions)
 
 	port := getEnv("PORT", "8080")
@@ -72,6 +83,12 @@ func main() {
 }
 
 func getTodaysPredictions(w http.ResponseWriter, r *http.Request) {
+	proxySecret := r.Header.Get("X-RapidAPI-Proxy-Secret")
+    expectedSecret := getEnv("RAPIDAPI_PROXY_SECRET", "")
+    if proxySecret == "" || proxySecret != expectedSecret {
+        http.Error(w, "404", http.StatusUnauthorized)
+        return
+    }
 	data, err := rdb.Get(ctx, "predictions:today").Result()
 	if err == redis.Nil {
 		http.Error(w, "Predictions not found", http.StatusNotFound)
