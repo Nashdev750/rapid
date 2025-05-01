@@ -35,13 +35,13 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - /redis_data:/data
+      - /redis_volume_data:/data
     networks:
       - backend
 
 volumes:
-  mongo_data: {}
-  redis_data: {}
+  mongo_data:
+  redis_volume_data:
 
 networks:
   backend:
