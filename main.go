@@ -139,7 +139,7 @@ func savePredictions(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to serialize predictions", http.StatusInternalServerError)
 		return
 	}
-	if err := rdb.Set(ctx, "predictions:today", data).Err(); err != nil {
+	if err := rdb.Set(ctx, "predictions:today", data, 30*time.Hour).Err(); err != nil {
 		http.Error(w, "Failed to cache predictions in Redis", http.StatusInternalServerError)
 		return
 	}
