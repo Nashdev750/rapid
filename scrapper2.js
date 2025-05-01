@@ -1,11 +1,6 @@
 const puppeteer = require('puppeteer');
-const Redis = require('ioredis');
+const axios = require('axios');  // Use axios to send the POST request
 const { v4: uuidv4 } = require('uuid');
-
-const redis = new Redis({
-  host: 'localhost',
-  port: 6379
-});
 
 (async () => {
   const url = 'https://footballpredictions.com/footballpredictions/';
@@ -68,11 +63,19 @@ const redis = new Redis({
     console.log(`✅ Prediction for ${prediction.home_team} vs ${prediction.away_team} prepared.`);
   }
 
-  // Save to Redis
-  await redis.set('predictions:today', JSON.stringify(todayPredictions));
+  // Send predictions to the API
+  try {
+    const apiUrl = 'http://localhost:8080/api/v1/predictions';  // Adjust if necessary (match your API URL)
+    const response = await axios.post(apiUrl, todayPredictions, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-  console.log('🎯 All predictions saved under predictions:today');
+    console.log('🎯 Predictions successfully sent to the API:', response.data);
+  } catch (error) {
+    console.error('❌ Failed to send predictions to the API:', error.message);
+  }
 
   await browser.close();
-  await redis.quit();
 })();

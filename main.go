@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v8"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"github.com/go-chi/cors"
@@ -73,6 +74,7 @@ func main() {
 	}))
 
 	r.Get("/api/v1/predictions", getTodaysPredictions)
+	r.Post("/api/v1/predictions", savePredictions)
 
 	port := getEnv("PORT", "8080")
 	log.Printf("Server starting on port %s...", port)
@@ -84,11 +86,11 @@ func main() {
 
 func getTodaysPredictions(w http.ResponseWriter, r *http.Request) {
 	proxySecret := r.Header.Get("X-RapidAPI-Proxy-Secret")
-    expectedSecret := getEnv("RAPIDAPI_PROXY_SECRET", "")
-    if proxySecret == "" || proxySecret != expectedSecret {
-        http.Error(w, "404", http.StatusUnauthorized)
-        return
-    }
+	expectedSecret := getEnv("RAPIDAPI_PROXY_SECRET", "")
+	if proxySecret == "" || proxySecret != expectedSecret {
+		http.Error(w, "404", http.StatusUnauthorized)
+		return
+	}
 	data, err := rdb.Get(ctx, "predictions:today").Result()
 	if err == redis.Nil {
 		http.Error(w, "Predictions not found", http.StatusNotFound)
@@ -107,6 +109,45 @@ func getTodaysPredictions(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"success": true,
 		"data":    predictions,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func savePredictions(w http.ResponseWriter, r *http.Request) {
+	// Read and parse the incoming predictions
+	var predictions []Prediction
+	if err := json.NewDecoder(r.Body).Decode(&predictions); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Save predictions to MongoDB
+	collection := mongoClient.Database("matchpredictions").Collection("predictions")
+	for _, prediction := range predictions {
+		_, err := collection.InsertOne(ctx, prediction)
+		if err != nil {
+			http.Error(w, "Failed to insert prediction into MongoDB", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Cache predictions in Redis
+	data, err := json.Marshal(predictions)
+	if err != nil {
+		http.Error(w, "Failed to serialize predictions", http.StatusInternalServerError)
+		return
+	}
+	if err := rdb.Set(ctx, "predictions:today", data).Err(); err != nil {
+		http.Error(w, "Failed to cache predictions in Redis", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"success": true,
+		"message": "Predictions saved successfully",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
