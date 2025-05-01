@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const redis = new Redis({
   host: 'localhost',
   port: 6379,
-  password: ''
+  password: '43RQ4R45TTTTTT52msh35d1945895fb417p12&565$IYU*776$'
 });
 
 (async () => {
